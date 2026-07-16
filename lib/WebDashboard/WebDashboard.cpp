@@ -27,7 +27,8 @@ void WebDashboard::handleRoot() {
 
 void WebDashboard::broadcastState() {
   if (_stateProvider) {
-    _webSocket.broadcastTXT(_stateProvider());
+    String payload = _stateProvider();
+    _webSocket.broadcastTXT(payload);
   }
 }
 
