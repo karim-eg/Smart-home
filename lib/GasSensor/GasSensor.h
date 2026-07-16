@@ -6,8 +6,6 @@ class GasSensor {
 public:
   void begin();
 
-  // Reads the sensor. Returns true if status or alert state changed
-  // (i.e. there's something new worth broadcasting).
   bool update();
 
   String statusString() const { return _status; } // "warming" | "active" | "offline"

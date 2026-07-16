@@ -9,14 +9,16 @@ extern IPAddress LOCAL_IP;
 extern IPAddress GATEWAY_IP;
 extern IPAddress SUBNET_MASK;
 
+
 // ── Sensor pins ──────────────────────────────────────────
-#define DHT_PIN     D6
 #define DHT_TYPE    DHT11
 
+#define PIR_PIN     D5
+#define DHT_PIN     D6
 #define MQ5_DO_PIN  D7
+
 #define MQ5_AO_PIN  A0
 
-#define PIR_PIN     D5
 
 // ── Relay pins ───────────────────────────────────────────
 #define STAIR_LAMP_RELAY_PIN   D1
@@ -24,6 +26,7 @@ extern IPAddress SUBNET_MASK;
 
 #define RELAY_ON  HIGH
 #define RELAY_OFF LOW
+
 
 // ── Timing constants ─────────────────────────────────────
 #define GAS_WARMUP_MS        10000UL
