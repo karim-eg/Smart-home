@@ -1,8 +1,6 @@
 #pragma once
 #include <Arduino.h>
 
-// Smart Home dashboard (HTML + CSS + JS), served at "/".
-// Edit this file to change the UI without touching any device logic.
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
