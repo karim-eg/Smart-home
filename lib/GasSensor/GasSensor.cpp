@@ -3,29 +3,48 @@
 
 void GasSensor::begin() {
   pinMode(MQ5_DO_PIN, INPUT);
+  pinMode(MQ5_AO_PIN, INPUT);
   _bootTime = millis();
 }
 
 bool GasSensor::update() {
-  int analogVal = analogRead(MQ5_AO_PIN);
-  bool warmedUp = (millis() - _bootTime) > GAS_WARMUP_MS;
+  _analog = analogRead(MQ5_AO_PIN);
+  bool doState = digitalRead(MQ5_DO_PIN);
+  
+  bool warmedUp = millis() - _bootTime > GAS_WARMUP_MS;
 
-  String newStatus;
+  GasSensorStatus newStatus;
   bool newAlert = false;
 
-  if (analogVal < GAS_OFFLINE_THRESHOLD) {
-    newStatus = "offline";
-  } else if (!warmedUp) {
-    newStatus = "warming";
+  if (!warmedUp) {
+    newStatus = GasSensorStatus::Warming;
+
+  } else if (_analog < GAS_OFFLINE_THRESHOLD) {
+    newStatus = GasSensorStatus::Offline;
+
   } else {
-    newStatus = "active";
-    newAlert = (digitalRead(MQ5_DO_PIN) == HIGH);
+    newStatus = GasSensorStatus::Active;
+    newAlert = doState;
   }
 
-  if (newStatus != _status || newAlert != _alert) {
-    _status = newStatus;
-    _alert  = newAlert;
-    return true;
+  bool changed = (_status != newStatus) || (_alert != newAlert);
+  _status = newStatus;
+  _alert = newAlert;
+
+  return changed;
+}
+
+const char* GasSensor::statusString() const {
+  switch (_status) {
+    case GasSensorStatus::Offline:
+      return "offline";
+
+    case GasSensorStatus::Warming:
+      return "warming";
+
+    case GasSensorStatus::Active:
+      return "active";
   }
-  return false;
+
+  return "unknown";
 }
