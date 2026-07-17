@@ -25,7 +25,15 @@ void Staircase::setManual(bool on) {
 
 void Staircase::setAuto(bool on) {
   _mode = on ? StairMode::AUTO : StairMode::OFF;
-  if (!on) applyMode();
+  if (on) {
+    // Auto mode starts with the lamp off and waits for a fresh PIR event.
+    // This also clears a lamp that was previously on in manual mode.
+    digitalWrite(STAIR_LAMP_RELAY_PIN, RELAY_OFF);
+    _lampOn = false;
+    _lastMotionTime = 0;
+  } else {
+    applyMode();
+  }
 }
 
 void Staircase::setOff() {

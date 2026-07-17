@@ -1,5 +1,7 @@
 #include "WebDashboard.h"
 #include "WebPage.h"
+#include "WebScript.h"
+#include "WebStyle.h"
 
 WebDashboard* WebDashboard::_instance = nullptr;
 
@@ -9,6 +11,14 @@ void WebDashboard::begin(WSMessageCallback onMessage, StateProvider stateProvide
   _instance      = this;
 
   _server.on("/", [this]() { handleRoot(); });
+  _server.on("/dashboard.css", HTTP_GET, [this]() {
+    _server.sendHeader("Cache-Control", "no-store, max-age=0");
+    _server.send_P(200, PSTR("text/css; charset=utf-8"), dashboard_css);
+  });
+  _server.on("/dashboard.js", HTTP_GET, [this]() {
+    _server.sendHeader("Cache-Control", "no-store, max-age=0");
+    _server.send_P(200, PSTR("application/javascript; charset=utf-8"), dashboard_js);
+  });
   _server.begin();
 
   _webSocket.begin();
@@ -21,8 +31,8 @@ void WebDashboard::loop() {
 }
 
 void WebDashboard::handleRoot() {
-  _server.sendHeader("Content-Type", "text/html; charset=utf-8");
-  _server.send(200, "text/html", index_html);
+  _server.sendHeader("Cache-Control", "no-store, max-age=0");
+  _server.send_P(200, PSTR("text/html; charset=utf-8"), index_html);
 }
 
 void WebDashboard::broadcastState() {
