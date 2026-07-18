@@ -25,7 +25,12 @@ private:
   StateProvider     _stateProvider;
 
   void handleRoot();
+  void handleUpdatePage();
+  void handleFirmwareUpload();
   void handleWSEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t len);
+
+  bool _updateSucceeded = false;
+  bool _rebootRequested = false;
 
   // WebSocketsServer wants a plain function pointer, so we trampoline
   // through a single static instance back into the member function.
