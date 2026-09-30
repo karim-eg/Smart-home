@@ -18,13 +18,10 @@ void NetworkManager::begin() {
   }
   Serial.println("\nConnected: " + WiFi.localIP().toString());
 
-  _dnsServer.start(53, "smart-home.local", LOCAL_IP);
-
   if (!MDNS.begin("smart-home")) {
     Serial.println("mDNS failed");
   }
 }
 
 void NetworkManager::loop() {
-  _dnsServer.processNextRequest();
 }

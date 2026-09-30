@@ -4,6 +4,8 @@
 #include <WebSocketsServer.h>
 #include <functional>
 
+class AdBlocker;
+
 using WSMessageCallback = std::function<void(const String&)>;
 using StateProvider     = std::function<String()>;
 
@@ -13,7 +15,7 @@ public:
   // onMessage   - called for every text message received from a browser client.
   // stateProvider - called whenever we need the latest state JSON to send out
   //                 (on new client connect, or when you call broadcastState()).
-  void begin(WSMessageCallback onMessage, StateProvider stateProvider);
+  void begin(WSMessageCallback onMessage, StateProvider stateProvider, AdBlocker& adBlocker);
 
   void loop();
   void broadcastState();
@@ -23,9 +25,13 @@ private:
   WebSocketsServer  _webSocket{81};
   WSMessageCallback _onMessage;
   StateProvider     _stateProvider;
+  AdBlocker*        _adBlocker = nullptr;
 
-  void handleRoot();
   void handleUpdatePage();
+  void handleAdBlockPage();
+  void handleAdBlockStats();
+  void handleAddBlockedDomain();
+  void handleRemoveBlockedDomain();
   void handleFirmwareUpload();
   void handleWSEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t len);
 

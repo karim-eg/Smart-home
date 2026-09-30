@@ -3,12 +3,10 @@
 
 void GasSensor::begin() {
   pinMode(MQ5_DO_PIN, INPUT);
-  pinMode(MQ5_AO_PIN, INPUT);
   _bootTime = millis();
 }
 
 bool GasSensor::update() {
-  _analog = analogRead(MQ5_AO_PIN);
   bool doState = digitalRead(MQ5_DO_PIN);
   
   bool warmedUp = millis() - _bootTime > GAS_WARMUP_MS;
@@ -18,9 +16,6 @@ bool GasSensor::update() {
 
   if (!warmedUp) {
     newStatus = GasSensorStatus::Warming;
-
-  } else if (_analog < GAS_OFFLINE_THRESHOLD) {
-    newStatus = GasSensorStatus::Offline;
 
   } else {
     newStatus = GasSensorStatus::Active;

@@ -25,7 +25,8 @@ extern const char* MQTT_PREFIX;
 #define DHT_PIN     D6
 #define MQ5_DO_PIN  D7
 
-#define MQ5_AO_PIN  A0
+#define SOIL_PIN    A0
+#define PUMP_PIN    D8
 
 
 // ── Relay pins ───────────────────────────────────────────
@@ -42,3 +43,7 @@ extern const char* MQTT_PREFIX;
 #define STAIR_AUTO_OFF_MS    20000UL
 #define CLIMATE_READ_MS      5000UL
 #define GAS_READ_MS          1000UL
+#define SOIL_DRY_THRESHOLD   697
+#define PUMP_TIME_MS         500UL
+#define SOIL_SOAK_MS         6000UL
+#define SOIL_READ_MS         2000UL

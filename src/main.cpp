@@ -6,7 +6,9 @@
 #include "Staircase.h"
 #include "NetworkManager.h"
 #include "WebDashboard.h"
+#include "AdBlocker.h"
 #include "MqttManager.h"
+#include "PlantIrrigation.h"
 
 // ── Modules ──────────────────────────────────────────────
 ClimateSensor  climate;
@@ -15,7 +17,9 @@ LivingRoomLamp livingRoom;
 Staircase      staircase;
 NetworkManager network;
 WebDashboard   dashboard;
+AdBlocker      adBlocker;
 MqttManager    mqtt;
+PlantIrrigation plant;
 
 // ── Timers ───────────────────────────────────────────────
 unsigned long lastClimateRead = 0;
@@ -31,7 +35,13 @@ String buildStateJson() {
   json += "\"temp\":\""      + String(climate.temperature(), 1) + "\",";
   json += "\"hum\":\""       + String(climate.humidity(), 1)    + "\",";
   json += "\"gasStatus\":\"" + String(gas.statusString()) + "\",";
-  json += "\"gasAlert\":"    + String(gas.alert() ? "true" : "false");
+  json += "\"gasAlert\":"    + String(gas.alert() ? "true" : "false") + ",";
+  json += "\"soilReady\":"   + String(plant.hasReading() ? "true" : "false") + ",";
+  json += "\"soilMoisture\":" + String(plant.moisturePercent()) + ",";
+  json += "\"soilRaw\":"     + String(plant.rawValue()) + ",";
+  json += "\"pumpOn\":"      + String(plant.pumpOn() ? "true" : "false") + ",";
+  json += "\"soaking\":"     + String(plant.soaking() ? "true" : "false") + ",";
+  json += "\"lastWatering\":" + String(plant.secondsSinceWatering());
 
   json += "}";
   return json;
@@ -57,8 +67,10 @@ void setup() {
   gas.begin();
   livingRoom.begin();
   staircase.begin();
+  plant.begin();
   network.begin();
-  dashboard.begin(onCommand, buildStateJson);
+  adBlocker.begin();
+  dashboard.begin(onCommand, buildStateJson, adBlocker);
   mqtt.begin(onCommand, buildStateJson);
 
   Serial.println("Ready.");
@@ -66,10 +78,16 @@ void setup() {
 
 void loop() {
   network.loop();
+  adBlocker.loop();
   dashboard.loop();
   mqtt.loop();
 
   if (staircase.loop()) {
+    dashboard.broadcastState();
+    mqtt.publishState();
+  }
+
+  if (plant.update()) {
     dashboard.broadcastState();
     mqtt.publishState();
   }

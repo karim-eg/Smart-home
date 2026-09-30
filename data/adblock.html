@@ -1,0 +1,59 @@
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>حاجب الإعلانات | Smart Home</title>
+		<link rel="stylesheet" href="/adblock.css">
+	</head>
+	<body>
+		<main>
+			<header class="top">
+				<div>
+					<p class="eyebrow">SMART HOME · NETWORK</p>
+					<h1>حاجب إعلانات الشبكة</h1>
+					<p class="muted">حجب نطاقات الإعلانات عبر DNS</p>
+				</div>
+				<a class="home" href="/">العودة للداشبورد ←</a>
+			</header>
+
+			<section class="card stats">
+				<div>
+					استعلامات DNS
+					<span class="num" id="q">—</span>
+				</div>
+				<div>
+					نطاقات محجوبة
+					<span class="num" id="b">—</span>
+				</div>
+				<div>
+					استعلامات محوّلة
+					<span class="num" id="f">—</span>
+				</div>
+			</section>
+
+			<section class="card">
+				<b>آخر نطاق تم طلبه</b>
+				<div id="last" class="muted last">—</div>
+			</section>
+
+			<section class="card">
+				<h2>قائمة الحجب</h2>
+				<form id="add" class="form">
+					<input id="domain" placeholder="ads.example.com" dir="ltr" maxlength="100" required>
+					<button>إضافة نطاق</button>
+				</form>
+				<p id="message" role="status"></p>
+				<p class="muted">التطابق يشمل النطاق وكل النطاقات الفرعية. القائمة تُحفظ على الجهاز.</p>
+				<ul id="domains"></ul>
+			</section>
+
+			<section class="card notice muted">
+				الحجب عبر DNS لا يمنع كل الإعلانات، خصوصًا إعلانات YouTube والتطبيقات التي تستخدم DNS مشفرًا. لتطبيق الحجب على الأجهزة، اضبط عنوان DNS الخاص بها على عنوان Smart Home:
+				<b dir="ltr">192.168.100.50</b>.
+			</section>
+		</main>
+		<script src="/adblock.js"></script>
+	</body>
+</html>

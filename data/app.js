@@ -1,7 +1,4 @@
-#pragma once
-#include <Arduino.h>
 
-const char dashboard_js[] PROGMEM = R"rawliteral(
 let ws, reconnectTimer;
 
 function setConnectionStatus(online) {
@@ -29,6 +26,25 @@ function startWS() {
 function updateDashboard(d) {
     document.getElementById('tempBadge').textContent = d.temp + '°C';
     document.getElementById('humLabel').textContent = d.hum + '%';
+    if (d.soilReady === true) {
+        const moisture = Math.max(0, Math.min(100, Number(d.soilMoisture) || 0));
+        const bar = document.getElementById('soilMoistureBar');
+        const track = bar.parentElement;
+        document.getElementById('soilMoisture').textContent = moisture + '%';
+        bar.style.width = moisture + '%';
+        track.setAttribute('aria-valuenow', moisture);
+        document.getElementById('soilRawValue').textContent = d.soilRaw;
+        document.getElementById('lastWatering').textContent = d.lastWatering === 0 ? 'Never' : d.lastWatering + ' seconds ago';
+        document.getElementById('plantPumpBadge').textContent = d.pumpOn ? 'ON' : 'OFF';
+        document.getElementById('plantPumpBadge').className = 'badge' + (d.pumpOn ? ' on' : '');
+        document.getElementById('soilCondition').textContent = moisture < 30 ? 'Soil is dry' : moisture < 60 ? 'Moisture is moderate' : 'Soil is moist';
+        document.getElementById('plantStatus').textContent = d.pumpOn ? 'Pump is watering the plant.' : d.soaking ? 'Watering finished; soil is soaking.' : 'Automatic irrigation is monitoring the soil.';
+    } else {
+        document.getElementById('soilMoisture').textContent = '--%';
+        document.getElementById('soilRawValue').textContent = '--';
+        document.getElementById('lastWatering').textContent = 'Never';
+        document.getElementById('soilCondition').textContent = 'Waiting for sensor data';
+    }
     const stairOn = d.l2 === 'ON',
         badge = document.getElementById('l2Badge');
 
@@ -93,4 +109,3 @@ function toggleAuto(e) {
     } else sendCommand('stair_auto_off')
 }
 window.onload = startWS;
-)rawliteral";

@@ -1,14 +1,11 @@
-#pragma once
-#include <Arduino.h>
 
-const char index_html[] PROGMEM = R"rawliteral(
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Smart Home Console</title>
-  <link rel="stylesheet" href="/dashboard.css?v=3">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main class="dashboard">
@@ -18,6 +15,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         <h1>System Overview</h1>
         <p class="page-sub">Monitor your sensors and staircase lighting.</p>
       </div>
+      <a class="page-sub" href="/adblock">حاجب إعلانات الشبكة ↗</a>
       <div class="conn-pill" aria-live="polite">
         <span class="status-dot" id="wsDot"></span>
         <span id="wsText">System Offline</span>
@@ -66,8 +64,30 @@ const char index_html[] PROGMEM = R"rawliteral(
         <div class="gas-message" id="gasStrip"><span id="gasLabel">Waiting for sensor data...</span></div>
       </article>
     </section>
+
+    <section class="plant-section" aria-label="Plant irrigation">
+      <article class="panel plant-panel" id="plantCard">
+        <div class="panel-heading">
+          <div class="heading-icon">&#127800;</div>
+          <div><h2>Mango Plant</h2><p>Soil moisture and automatic irrigation</p></div>
+          <span class="badge" id="plantModeBadge">AUTO</span>
+        </div>
+        <div class="plant-readings">
+          <div class="plant-moisture">
+            <div class="plant-reading-heading"><span>Soil moisture</span><strong id="soilMoisture">--%</strong></div>
+            <div class="moisture-track" role="progressbar" aria-label="Soil moisture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="soilMoistureBar"></span></div>
+            <small id="soilCondition">Waiting for sensor data</small>
+          </div>
+          <div class="plant-stats">
+            <div><span>Pump</span><strong class="badge" id="plantPumpBadge">OFF</strong></div>
+            <div><span>Sensor raw value</span><strong id="soilRawValue">--</strong></div>
+            <div><span>Last watering</span><strong id="lastWatering">Never</strong></div>
+          </div>
+        </div>
+        <div class="status-note" id="plantStatus">Automatic irrigation is monitoring the soil.</div>
+      </article>
+    </section>
   </main>
-  <script src="/dashboard.js?v=3"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
-)rawliteral";
