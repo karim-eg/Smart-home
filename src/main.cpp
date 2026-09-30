@@ -6,6 +6,7 @@
 #include "Staircase.h"
 #include "NetworkManager.h"
 #include "WebDashboard.h"
+#include "MqttManager.h"
 
 // ── Modules ──────────────────────────────────────────────
 ClimateSensor  climate;
@@ -14,6 +15,7 @@ LivingRoomLamp livingRoom;
 Staircase      staircase;
 NetworkManager network;
 WebDashboard   dashboard;
+MqttManager    mqtt;
 
 // ── Timers ───────────────────────────────────────────────
 unsigned long lastClimateRead = 0;
@@ -35,8 +37,8 @@ String buildStateJson() {
   return json;
 }
 
-// Routes incoming WebSocket commands from the dashboard to the right module.
-void onWSMessage(const String& msg) {
+// Routes commands from either the LAN WebSocket dashboard or MQTT.
+void onCommand(const String& msg) {
   if (msg == "l1_on")                 livingRoom.turnOn();
   else if (msg == "l1_off")           livingRoom.turnOff();
   else if (msg == "stair_manual_on")  staircase.setManual(true);
@@ -45,6 +47,7 @@ void onWSMessage(const String& msg) {
   else if (msg == "stair_auto_off")   staircase.setOff();
 
   dashboard.broadcastState();
+  mqtt.publishState();
 }
 
 void setup() {
@@ -55,7 +58,8 @@ void setup() {
   livingRoom.begin();
   staircase.begin();
   network.begin();
-  dashboard.begin(onWSMessage, buildStateJson);
+  dashboard.begin(onCommand, buildStateJson);
+  mqtt.begin(onCommand, buildStateJson);
 
   Serial.println("Ready.");
 }
@@ -63,15 +67,18 @@ void setup() {
 void loop() {
   network.loop();
   dashboard.loop();
+  mqtt.loop();
 
   if (staircase.loop()) {
     dashboard.broadcastState();
+    mqtt.publishState();
   }
 
   if (millis() - lastClimateRead > CLIMATE_READ_MS) {
     lastClimateRead = millis();
     if (climate.update()) {
       dashboard.broadcastState();
+      mqtt.publishState();
     }
   }
 
@@ -79,6 +86,7 @@ void loop() {
     lastGasRead = millis();
     if (gas.update()) {
       dashboard.broadcastState();
+      mqtt.publishState();
     }
   }
 

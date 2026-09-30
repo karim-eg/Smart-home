@@ -9,6 +9,14 @@ extern IPAddress LOCAL_IP;
 extern IPAddress GATEWAY_IP;
 extern IPAddress SUBNET_MASK;
 
+// MQTT connection settings, populated from the ignored secrets.h file.
+extern const char* MQTT_HOST;
+extern uint16_t MQTT_PORT;
+extern const char* MQTT_USER;
+extern const char* MQTT_PASS;
+extern const char* MQTT_DEVICE_ID;
+extern const char* MQTT_PREFIX;
+
 
 // ── Sensor pins ──────────────────────────────────────────
 #define DHT_TYPE    DHT11
