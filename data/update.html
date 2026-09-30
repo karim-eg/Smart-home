@@ -1,2 +1,35 @@
 
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Firmware Update</title><link rel="stylesheet" href="/update.css"></head><body><main class="card"><h1>Firmware Update</h1><p>Choose a compiled <code>.bin</code> file to install it. Keep this page open until the device restarts.</p><form id="form" method="POST" action="/update" enctype="multipart/form-data"><label class="file">Firmware file<input id="file" name="firmware" type="file" accept=".bin,application/octet-stream" required></label><button id="submit" type="submit">Install Update</button></form><p id="status" role="status"></p><a class="back" href="/">Back to dashboard</a></main><script src="/update.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Firmware Update</title>
+		<link rel="stylesheet" href="/update.css">
+	</head>
+	<body>
+		<main class="card">
+			<h1>Firmware Update</h1>
+			<p>
+				Choose a compiled <code>.bin</code> file to install it. Keep this page
+				open until the device restarts.
+			</p>
+			<form id="form" method="POST" action="/update" enctype="multipart/form-data">
+				<label class="file">
+					Firmware file
+					<input
+						id="file"
+						name="firmware"
+						type="file"
+						accept=".bin,application/octet-stream"
+						required
+					>
+				</label>
+				<button id="submit" type="submit">Install Update</button>
+			</form>
+			<p id="status" role="status"></p>
+			<a class="back" href="/">Back to dashboard</a>
+		</main>
+		<script src="/update.js"></script>
+	</body>
+</html>
