@@ -31,7 +31,7 @@ void MqttManager::loop() {
 }
 
 bool MqttManager::connect() {
-  Serial.printf("Connecting to MQTT broker %s...\n", MQTT_HOST);
+  //Serial.printf("Connecting to MQTT broker %s...\n", MQTT_HOST);
   const bool connected = _client.connect(
     MQTT_DEVICE_ID,
     MQTT_USER,
@@ -42,6 +42,7 @@ bool MqttManager::connect() {
     "offline");
 
   if (!connected) {
+    //Serial.printf("MQTT connection failed (rc=%d)\n", _client.state());
     return false;
   }
 
