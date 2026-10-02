@@ -24,4 +24,7 @@ void NetworkManager::begin() {
 }
 
 void NetworkManager::loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    MDNS.update();
+  }
 }
