@@ -42,7 +42,6 @@ bool MqttManager::connect() {
     "offline");
 
   if (!connected) {
-    Serial.printf("MQTT connection failed (rc=%d)\n", _client.state());
     return false;
   }
 
