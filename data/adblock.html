@@ -15,42 +15,42 @@
 					<h1>Ad blocker</h1>
 					<p class="muted">Block ad domains via DNS</p>
 				</div>
-				<a class="home" href="/">العودة للداشبورد ←</a>
+				<a class="home" href="/">← Back to dashboard</a>
 			</header>
 
 			<section class="card stats">
 				<div>
-					استعلامات DNS
+					DNS Queries
 					<span class="num" id="q">—</span>
 				</div>
 				<div>
-					نطاقات محجوبة
+					Blocked Queries
 					<span class="num" id="b">—</span>
 				</div>
 				<div>
-					استعلامات محوّلة
+					Forwarded Queries
 					<span class="num" id="f">—</span>
 				</div>
 			</section>
 
 			<section class="card">
-				<b>آخر نطاق تم طلبه</b>
+				<b>Last Query</b>
 				<div id="last" class="muted last">—</div>
 			</section>
 
 			<section class="card">
-				<h2>قائمة الحجب</h2>
+				<h2>Domains List</h2>
 				<form id="add" class="form">
 					<input id="domain" placeholder="ads.example.com" dir="ltr" maxlength="100" required>
-					<button>إضافة نطاق</button>
+					<button>Add Domain</button>
 				</form>
 				<p id="message" role="status"></p>
-				<p class="muted">التطابق يشمل النطاق وكل النطاقات الفرعية. القائمة تُحفظ على الجهاز.</p>
+				<p class="muted">The matching includes the domain and all its subdomains. The list is saved on the device.</p>
 				<ul id="domains"></ul>
 			</section>
 
 			<section class="card notice muted">
-				الحجب عبر DNS لا يمنع كل الإعلانات، خصوصًا إعلانات YouTube والتطبيقات التي تستخدم DNS مشفرًا. لتطبيق الحجب على الأجهزة، اضبط عنوان DNS الخاص بها على عنوان Smart Home:
+				Blockage via DNS does not prevent all advertisements, especially YouTube ads and applications that use encrypted DNS. To apply blockage to devices, set their DNS address to the Smart Home address:
 				<b dir="ltr">192.168.100.50</b>.
 			</section>
 		</main>
