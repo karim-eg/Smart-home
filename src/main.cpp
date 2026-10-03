@@ -9,6 +9,7 @@
 #include "AdBlocker.h"
 #include "MqttManager.h"
 #include "PlantIrrigation.h"
+#include "FanController.h"
 
 // ── Modules ──────────────────────────────────────────────
 ClimateSensor  climate;
@@ -20,6 +21,7 @@ WebDashboard   dashboard;
 AdBlocker      adBlocker;
 MqttManager    mqtt;
 PlantIrrigation plant;
+FanController  fan;
 
 // ── Timers ───────────────────────────────────────────────
 unsigned long lastClimateRead = 0;
@@ -42,6 +44,7 @@ String buildStateJson() {
   json += "\"pumpOn\":"      + String(plant.pumpOn() ? "true" : "false") + ",";
   json += "\"soaking\":"     + String(plant.soaking() ? "true" : "false") + ",";
   json += "\"lastWatering\":" + String(plant.secondsSinceWatering());
+  json += ",\"fanAutoStart\":" + String(fan.autoStartEnabled() ? "true" : "false");
 
   json += "}";
   return json;
@@ -55,6 +58,10 @@ void onCommand(const String& msg) {
   else if (msg == "stair_manual_off") staircase.setOff();
   else if (msg == "stair_auto_on")    staircase.setAuto(true);
   else if (msg == "stair_auto_off")   staircase.setOff();
+  else if (msg == "fan_auto_start_on")  fan.setAutoStartEnabled(true);
+  else if (msg == "fan_auto_start_off") fan.setAutoStartEnabled(false);
+  else if (msg == "fan_power_speed")    fan.powerAndSpeed();
+  else if (msg == "fan_swing")          fan.swing();
 
   dashboard.broadcastState();
   mqtt.publishState();
@@ -70,6 +77,7 @@ void setup() {
   plant.begin();
   network.begin();
   adBlocker.begin();
+  fan.begin();
   dashboard.begin(onCommand, buildStateJson, adBlocker);
   mqtt.begin(onCommand, buildStateJson);
 

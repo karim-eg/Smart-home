@@ -24,6 +24,8 @@ function startWS() {
 }
 
 function updateDashboard(d) {
+    const fanAutoStart = document.getElementById('fanAutoStart');
+    if (fanAutoStart && typeof d.fanAutoStart === 'boolean') fanAutoStart.checked = d.fanAutoStart;
     document.getElementById('tempBadge').textContent = d.temp + '°C';
     document.getElementById('humLabel').textContent = d.hum + '%';
     if (d.soilReady === true) {
@@ -108,4 +110,17 @@ function toggleAuto(e) {
         sendCommand('stair_auto_on')
     } else sendCommand('stair_auto_off')
 }
+
+function openFanSettings() {
+    document.getElementById('fanSettingsDialog').showModal();
+}
+
+function closeFanSettings() {
+    document.getElementById('fanSettingsDialog').close();
+}
+
+function setFanAutoStart(e) {
+    sendCommand(e.target.checked ? 'fan_auto_start_on' : 'fan_auto_start_off');
+}
+
 window.onload = startWS;

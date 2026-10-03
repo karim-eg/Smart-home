@@ -14,6 +14,7 @@ silkscreen label; the GPIO number is the ESP8266 pin used by the firmware.
 | `D7` | GPIO13 | MQ-5 gas sensor module | `DO` / digital output |
 | `A0` | ADC0 | Soil moisture sensor | `AO` / analog output |
 | `D8` | GPIO15 | Pump relay or transistor driver | `IN` / control signal |
+| `D0` | GPIO16 | IR LED driver for the fan | Transistor driver input |
 
 ### Power and load connections
 
@@ -34,6 +35,11 @@ silkscreen label; the GPIO number is the ESP8266 pin used by the firmware.
   starts. Use a driver that does not pull this pin HIGH during reset, and
   ensure the pump stays off during boot. The firmware drives `D8` HIGH only
   when watering.
+- Connect an infrared LED through a transistor driver to `D0` (`GPIO16`) so the
+  controller can send the fan's remote commands. Do not drive a high-power IR
+  LED directly from the GPIO. The dashboard's **Fan Setting** option is stored
+  in LittleFS; when enabled, the saved power/speed and swing sequence is sent
+  after the controller starts.
 - Connect the soil sensor's analog output to `A0` and keep its voltage within
   the board's A0 input range (check the exact NodeMCU board revision; do not
   assume every ESP8266 board has the same input divider).

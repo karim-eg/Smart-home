@@ -26,6 +26,7 @@ extern const char* MQTT_PREFIX;
 
 #define SOIL_PIN    A0
 #define PUMP_PIN    D8
+#define FAN_IR_PIN  D0
 
 
 // ── Relay pins ───────────────────────────────────────────

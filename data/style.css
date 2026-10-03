@@ -258,6 +258,91 @@ body {
     margin-top: 18px
 }
 
+.fan-section {
+    margin-top: 18px
+}
+
+.fan-panel .panel-heading {
+    padding-bottom: 0;
+    border-bottom: 0
+}
+
+.secondary-button,
+.primary-button,
+.icon-button {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.secondary-button {
+    margin-left: auto;
+    padding: 10px 14px;
+    background: #252f4b
+}
+
+.settings-dialog {
+    width: min(520px, calc(100% - 28px));
+    padding: 23px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--ink);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .55)
+}
+
+.settings-dialog::backdrop {
+    background: rgba(3, 7, 18, .72);
+    backdrop-filter: blur(3px)
+}
+
+.dialog-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px
+}
+
+.dialog-heading h2 {
+    margin: 0;
+    font-size: 20px
+}
+
+.dialog-heading .eyebrow {
+    margin-bottom: 6px
+}
+
+.icon-button {
+    width: 34px;
+    height: 34px;
+    background: var(--panel-2);
+    font-size: 23px;
+    line-height: 1
+}
+
+.fan-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 20px
+}
+
+.primary-button {
+    flex: 1;
+    min-height: 44px;
+    padding: 10px 14px;
+    background: #373d75
+}
+
+.dialog-note {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 12px
+}
+
 .plant-panel {
     width: 100%
 }
