@@ -28,25 +28,10 @@ function updateDashboard(d) {
     if (fanAutoStart && typeof d.fanAutoStart === 'boolean') fanAutoStart.checked = d.fanAutoStart;
     document.getElementById('tempBadge').textContent = d.temp + '°C';
     document.getElementById('humLabel').textContent = d.hum + '%';
-    if (d.soilReady === true) {
-        const moisture = Math.max(0, Math.min(100, Number(d.soilMoisture) || 0));
-        const bar = document.getElementById('soilMoistureBar');
-        const track = bar.parentElement;
-        document.getElementById('soilMoisture').textContent = moisture + '%';
-        bar.style.width = moisture + '%';
-        track.setAttribute('aria-valuenow', moisture);
-        document.getElementById('soilRawValue').textContent = d.soilRaw;
-        document.getElementById('lastWatering').textContent = d.lastWatering === 0 ? 'Never' : d.lastWatering + ' seconds ago';
-        document.getElementById('plantPumpBadge').textContent = d.pumpOn ? 'ON' : 'OFF';
-        document.getElementById('plantPumpBadge').className = 'badge' + (d.pumpOn ? ' on' : '');
-        document.getElementById('soilCondition').textContent = moisture < 30 ? 'Soil is dry' : moisture < 60 ? 'Moisture is moderate' : 'Soil is moist';
-        document.getElementById('plantStatus').textContent = d.pumpOn ? 'Pump is watering the plant.' : d.soaking ? 'Watering finished; soil is soaking.' : 'Automatic irrigation is monitoring the soil.';
-    } else {
-        document.getElementById('soilMoisture').textContent = '--%';
-        document.getElementById('soilRawValue').textContent = '--';
-        document.getElementById('lastWatering').textContent = 'Never';
-        document.getElementById('soilCondition').textContent = 'Waiting for sensor data';
-    }
+    const livingRoomOn = d.l1 === 'ON';
+    document.getElementById('l1Badge').textContent = d.l1;
+    document.getElementById('l1Badge').className = 'badge' + (livingRoomOn ? ' on' : '');
+    document.getElementById('t1').checked = livingRoomOn;
     const stairOn = d.l2 === 'ON',
         badge = document.getElementById('l2Badge');
 
@@ -63,7 +48,7 @@ function updateDashboard(d) {
         gasStrip = document.getElementById('gasStrip'),
         gasLabel = document.getElementById('gasLabel');
 
-    if (d.gasAlert !== true) {
+    if (d.gasAlert === true) {
         gasBadge.textContent = 'ALERT';
         gasTrend.textContent = 'Action required';
         gasIcon.textContent = '🔴';
@@ -94,7 +79,17 @@ function updateDashboard(d) {
 }
 
 function sendCommand(command) {
-    if (ws && ws.readyState === WebSocket.OPEN) ws.send(command)
+    fetch('/api/command?cmd=' + encodeURIComponent(command), { method: 'POST' })
+        .then(response => {
+            if (!response.ok) throw new Error('Command failed');
+            return response.json();
+        })
+        .then(updateDashboard)
+        .catch(() => setConnectionStatus(false));
+}
+
+function toggleLivingRoom(e) {
+    sendCommand(e.target.checked ? 'l1_on' : 'l1_off');
 }
 
 function toggleManual(e) {

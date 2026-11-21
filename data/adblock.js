@@ -10,6 +10,9 @@ async function refresh() {
 		byId('b').textContent = d.blocked;
 		byId('f').textContent = d.forwarded;
 		byId('last').textContent = d.last || '—';
+		byId('storageState').textContent = d.storage
+			? 'SD card ready — settings and DNS history are saved.'
+			: 'SD card unavailable — saved changes cannot be written.';
 
 		const ul = byId('domains');
 		ul.replaceChildren();
@@ -27,6 +30,32 @@ async function refresh() {
 		});
 	} catch (e) {
 		byId('message').textContent = 'Failed to connect to the device';
+	}
+}
+
+async function refreshHistory() {
+	try {
+		const r = await fetch('/api/adblock/history', { cache: 'no-store' });
+		if (!r.ok) throw Error();
+		const d = await r.json();
+		const ul = byId('history');
+		ul.replaceChildren();
+		if (!d.events.length) {
+			const li = document.createElement('li');
+			li.textContent = 'No blocked requests recorded yet.';
+			ul.append(li);
+			return;
+		}
+		d.events.slice().reverse().forEach(event => {
+			const li = document.createElement('li');
+			const when = event.epoch
+				? new Date(event.epoch * 1000).toLocaleString()
+				: `Uptime ${event.uptime}s`;
+			li.textContent = `${event.domain} · ${when}`;
+			ul.append(li);
+		});
+	} catch (e) {
+		byId('history').textContent = 'Could not load DNS history.';
 	}
 }
 
@@ -56,4 +85,6 @@ byId('add').addEventListener('submit', async e => {
 });
 
 refresh();
+refreshHistory();
 setInterval(refresh, 2500);
+setInterval(refreshHistory, 15000);

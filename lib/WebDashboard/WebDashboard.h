@@ -30,8 +30,10 @@ private:
   void handleUpdatePage();
   void handleAdBlockPage();
   void handleAdBlockStats();
+  void handleAdBlockHistory();
   void handleAddBlockedDomain();
   void handleRemoveBlockedDomain();
+  void handleCommand();
   void handleFirmwareUpload();
   void handleWSEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t len);
 

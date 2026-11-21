@@ -13,7 +13,7 @@
       <div>
         <p class="eyebrow">SMART HOME</p>
         <h1>System Overview</h1>
-        <p class="page-sub">Monitor your sensors and staircase lighting.</p>
+        <p class="page-sub">Monitor your sensors and control your home lighting.</p>
       </div>
       <a class="page-sub" href="/adblock">Ad blocker Dashboard ↗</a>
       <div class="conn-pill" aria-live="polite">
@@ -38,6 +38,18 @@
     </section>
 
     <section class="content-grid">
+      <article class="panel living-room-panel">
+        <div class="panel-heading">
+          <div class="heading-icon">&#128161;</div>
+          <div><h2>Living Room Light</h2><p>Relay module control</p></div>
+          <span class="badge" id="l1Badge">OFF</span>
+        </div>
+        <div class="control-row">
+          <div><h3>Power</h3><p>Switch the living room lamp.</p></div>
+          <label class="switch"><input type="checkbox" id="t1" onchange="toggleLivingRoom(event)"><span></span></label>
+        </div>
+      </article>
+
       <article class="panel staircase-panel" id="stairCard">
         <div class="panel-heading">
           <div class="heading-icon">&#129501;</div>
@@ -56,6 +68,9 @@
         <div class="status-note" id="statusStrip"><span id="statusLabel">Both modes are off — lamp is off.</span></div>
       </article>
 
+    </section>
+
+    <section class="utility-grid">
       <article class="panel gas-panel" id="gasCard">
         <div class="panel-heading">
           <div class="heading-icon">&#129514;</div>
@@ -63,14 +78,11 @@
         </div>
         <div class="gas-message" id="gasStrip"><span id="gasLabel">Waiting for sensor data...</span></div>
       </article>
-    </section>
-
-    <section class="fan-section" aria-label="Fan controls">
       <article class="panel fan-panel">
         <div class="panel-heading">
           <div class="heading-icon">&#127744;</div>
           <div><h2>Fan</h2><p>Infrared remote control</p></div>
-          <button class="secondary-button" type="button" onclick="openFanSettings()">Fan Setting</button>
+          <button class="fan-settings-button" type="button" onclick="openFanSettings()"><span aria-hidden="true">&#9881;</span> Fan settings</button>
         </div>
       </article>
     </section>
@@ -91,28 +103,6 @@
       <p class="dialog-note">Manual commands are sent to the fan by infrared.</p>
     </dialog>
 
-    <section class="plant-section" aria-label="Plant irrigation">
-      <article class="panel plant-panel" id="plantCard">
-        <div class="panel-heading">
-          <div class="heading-icon">&#127800;</div>
-          <div><h2>Plant Irrigation</h2><p>Soil moisture and automatic irrigation</p></div>
-          <span class="badge" id="plantModeBadge">AUTO</span>
-        </div>
-        <div class="plant-readings">
-          <div class="plant-moisture">
-            <div class="plant-reading-heading"><span>Soil moisture</span><strong id="soilMoisture">--%</strong></div>
-            <div class="moisture-track" role="progressbar" aria-label="Soil moisture" aria-valuemin="0" aria-valuemax="100" ariavaluenow="0"><span id="soilMoistureBar"></span></div>
-            <small id="soilCondition">Waiting for sensor data</small>
-          </div>
-          <div class="plant-stats">
-            <div><span>Pump</span><strong class="badge" id="plantPumpBadge">OFF</strong></div>
-            <div><span>Sensor raw value</span><strong id="soilRawValue">--</strong></div>
-            <div><span>Last watering</span><strong id="lastWatering">Never</strong></div>
-          </div>
-        </div>
-        <div class="status-note" id="plantStatus">Automatic irrigation is monitoring the soil.</div>
-      </article>
-    </section>
   </main>
   <script src="/app.js"></script>
 </body>

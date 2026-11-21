@@ -36,6 +36,7 @@
 			<section class="card">
 				<b>Last Query</b>
 				<div id="last" class="muted last">—</div>
+				<p id="storageState" class="muted" role="status">Checking SD card…</p>
 			</section>
 
 			<section class="card">
@@ -47,6 +48,12 @@
 				<p id="message" role="status"></p>
 				<p class="muted">The matching includes the domain and all its subdomains. The list is saved on the device.</p>
 				<ul id="domains"></ul>
+			</section>
+
+			<section class="card">
+				<h2>Blocked DNS History</h2>
+				<p class="muted">Recent blocked domain requests saved on the SD card.</p>
+				<ul id="history"></ul>
 			</section>
 
 			<section class="card notice muted">

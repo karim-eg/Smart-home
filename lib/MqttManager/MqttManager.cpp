@@ -31,7 +31,6 @@ void MqttManager::loop() {
 }
 
 bool MqttManager::connect() {
-  //Serial.printf("Connecting to MQTT broker %s...\n", MQTT_HOST);
   const bool connected = _client.connect(
     MQTT_DEVICE_ID,
     MQTT_USER,
@@ -42,14 +41,12 @@ bool MqttManager::connect() {
     "offline");
 
   if (!connected) {
-    //Serial.printf("MQTT connection failed (rc=%d)\n", _client.state());
     return false;
   }
 
   _client.publish(_availabilityTopic.c_str(), "online", true);
   _client.subscribe(_commandTopic.c_str(), 1);
   publishState();
-  Serial.println("MQTT connected");
   return true;
 }
 
@@ -66,6 +63,5 @@ void MqttManager::onMessage(char* topic, uint8_t* payload, unsigned int length) 
   String command;
   command.reserve(length);
   for (unsigned int i = 0; i < length; ++i) command += static_cast<char>(payload[i]);
-  Serial.println("MQTT command: " + command);
   if (_instance->_onCommand) _instance->_onCommand(command);
 }

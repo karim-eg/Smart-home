@@ -26,8 +26,10 @@ void WebDashboard::begin(WSMessageCallback onMessage, StateProvider stateProvide
 
   _server.on("/adblock", HTTP_GET, [this]() { handleAdBlockPage(); });
   _server.on("/api/adblock/stats", HTTP_GET, [this]() { handleAdBlockStats(); });
+  _server.on("/api/adblock/history", HTTP_GET, [this]() { handleAdBlockHistory(); });
   _server.on("/api/adblock/domains", HTTP_POST, [this]() { handleAddBlockedDomain(); });
   _server.on("/api/adblock/remove", HTTP_POST, [this]() { handleRemoveBlockedDomain(); });
+  _server.on("/api/command", HTTP_POST, [this]() { handleCommand(); });
   _server.on("/update", HTTP_GET, [this]() { handleUpdatePage(); });
   _server.on("/update", HTTP_POST,
     [this]() {
@@ -68,6 +70,11 @@ void WebDashboard::handleAdBlockStats() {
   _server.send(200, "application/json; charset=utf-8", _adBlocker ? _adBlocker->statsJson() : "{}");
 }
 
+void WebDashboard::handleAdBlockHistory() {
+  _server.sendHeader("Cache-Control", "no-store, max-age=0");
+  _server.send(200, "application/json; charset=utf-8", _adBlocker ? _adBlocker->historyJson() : "{\"events\":[]}");
+}
+
 void WebDashboard::handleAddBlockedDomain() {
   String error;
   if (!_adBlocker || !_adBlocker->addDomain(_server.arg("domain"), error)) {
@@ -85,26 +92,32 @@ void WebDashboard::handleRemoveBlockedDomain() {
   _server.send(200, "text/plain; charset=utf-8", "تم الحذف");
 }
 
+void WebDashboard::handleCommand() {
+  const String command = _server.arg("cmd");
+  if (!command.length()) {
+    _server.send(400, "application/json; charset=utf-8", "{\"error\":\"Missing command\"}");
+    return;
+  }
+
+  if (_onMessage) _onMessage(command);
+  _server.sendHeader("Cache-Control", "no-store, max-age=0");
+  _server.send(200, "application/json; charset=utf-8", _stateProvider ? _stateProvider() : "{}");
+}
+
 void WebDashboard::handleFirmwareUpload() {
   HTTPUpload& upload = _server.upload();
 
   if (upload.status == UPLOAD_FILE_START) {
     _updateSucceeded = false;
-    Serial.printf("Firmware update started: %s\n", upload.filename.c_str());
     // ESP8266 requires the available sketch slot size up front.
     const size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-    if (!Update.begin(maxSketchSpace)) Update.printError(Serial);
+    if (!Update.begin(maxSketchSpace)) _updateSucceeded = false;
   } else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (Update.isRunning() && Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-      Update.printError(Serial);
-    }
+    if (Update.isRunning()) Update.write(upload.buf, upload.currentSize);
   } else if (upload.status == UPLOAD_FILE_END) {
-    _updateSucceeded = Update.isRunning() && Update.end(true);
-    if (_updateSucceeded) Serial.printf("Firmware update complete: %u bytes\n", upload.totalSize);
-    else Update.printError(Serial);
+    _updateSucceeded = Update.isRunning() && Update.end(true) && !Update.hasError();
   } else if (upload.status == UPLOAD_FILE_ABORTED) {
     Update.end();
-    Serial.println("Firmware update aborted");
   }
 }
 
@@ -121,14 +134,14 @@ void WebDashboard::staticWSEvent(uint8_t num, WStype_t type, uint8_t* payload, s
 
 void WebDashboard::handleWSEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t len) {
   if (type == WStype_CONNECTED) {
-    Serial.println("Client connected");
     broadcastState();
     return;
   }
   if (type != WStype_TEXT) return;
 
-  String msg = String((char*)payload);
-  Serial.println("WS msg: " + msg);
+  String msg;
+  msg.reserve(len);
+  for (size_t i = 0; i < len; ++i) msg += static_cast<char>(payload[i]);
 
   if (_onMessage) _onMessage(msg);
 }

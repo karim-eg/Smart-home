@@ -1,7 +1,8 @@
 #include "FanController.h"
 #include <IRremote.hpp>
-#include <LittleFS.h>
+#include <SD.h>
 #include "Config.h"
+#include "StorageManager.h"
 
 namespace {
 const uint16_t powerRaw[] = {
@@ -22,7 +23,7 @@ constexpr char SETTINGS_PATH[] = "/fan.json";
 }
 
 void FanController::begin() {
-  File settings = LittleFS.open(SETTINGS_PATH, "r");
+  File settings = storage.sdReady() ? SD.open(SETTINGS_PATH, "r") : File();
   if (settings) {
     String value = settings.readString();
     settings.close();
@@ -33,20 +34,24 @@ void FanController::begin() {
   if (_autoStartEnabled) sendStartupSequence();
 }
 
-void FanController::setAutoStartEnabled(bool enabled) {
-  if (_autoStartEnabled == enabled) return;
+bool FanController::setAutoStartEnabled(bool enabled) {
+  if (_autoStartEnabled == enabled) return true;
+  const bool previous = _autoStartEnabled;
   _autoStartEnabled = enabled;
-  saveSetting();
+  if (saveSetting()) return true;
+  _autoStartEnabled = previous;
+  return false;
 }
 
-void FanController::saveSetting() const {
-  File settings = LittleFS.open(SETTINGS_PATH, "w");
-  if (!settings) {
-    Serial.println("Could not save fan settings");
-    return;
-  }
+bool FanController::saveSetting() const {
+  if (!storage.sdReady()) return false;
+  File settings = SD.open(SETTINGS_PATH, "w");
+  if (!settings) return false;
   settings.printf("{\"autoStart\":%s}", _autoStartEnabled ? "true" : "false");
+  settings.flush();
+  const bool saved = !settings.getWriteError();
   settings.close();
+  return saved;
 }
 
 void FanController::powerAndSpeed() {

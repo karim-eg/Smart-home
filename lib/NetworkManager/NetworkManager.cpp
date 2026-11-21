@@ -6,21 +6,16 @@
 void NetworkManager::begin() {
   WiFi.mode(WIFI_STA);
 
-  if (!WiFi.config(LOCAL_IP, GATEWAY_IP, SUBNET_MASK)) {
-    Serial.println("Static IP failed");
-  }
+  WiFi.config(LOCAL_IP, GATEWAY_IP, SUBNET_MASK);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
   }
-  Serial.println("\nConnected: " + WiFi.localIP().toString());
+  configTime(0, 0, "pool.ntp.org", "time.cloudflare.com");
 
-  if (!MDNS.begin("smart-home")) {
-    Serial.println("mDNS failed");
-  }
+  MDNS.begin("smart-home");
 }
 
 void NetworkManager::loop() {

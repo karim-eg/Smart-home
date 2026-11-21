@@ -1,15 +1,24 @@
 #include "AdBlocker.h"
 
 #include <ESP8266WiFi.h>
-#include <LittleFS.h>
+#include <SD.h>
+#include <time.h>
 #include "Config.h"
+#include "StorageManager.h"
 
 namespace {
 const IPAddress UPSTREAM_DNS(1, 1, 1, 1);
 constexpr uint16_t DNS_PORT = 53;
 constexpr uint16_t UPSTREAM_LOCAL_PORT = 53000;
-constexpr size_t PACKET_SIZE = 512;
+constexpr uint16_t PACKET_SIZE = 512;
 constexpr uint32_t QUERY_TIMEOUT_MS = 5000;
+constexpr uint32_t STATS_SAVE_INTERVAL_MS = 60000;
+constexpr size_t HISTORY_FILE_LIMIT = 32 * 1024;
+constexpr uint8_t HISTORY_ITEMS = 30;
+constexpr char BLOCKLIST_PATH[] = "/block.txt";
+constexpr char STATS_PATH[] = "/dns_stats.csv";
+constexpr char HISTORY_PATH[] = "/dns_history.csv";
+constexpr char OLD_HISTORY_PATH[] = "/dns_history.old";
 
 bool validDomain(const String& value) {
   if (value.length() < 3 || value.length() > 100 || value.indexOf('.') < 1) return false;
@@ -62,20 +71,27 @@ void sendNoData(WiFiUDP& udp, uint8_t* packet, uint16_t length,
 }
 
 void AdBlocker::begin() {
-  if (!LittleFS.begin()) Serial.println("DNS blocklist storage unavailable");
+  _storageReady = storage.sdReady();
   loadDomains();
-  if (!_udp.begin(DNS_PORT)) Serial.println("DNS server failed to bind port 53");
-  else Serial.println("DNS ad blocker listening on port 53");
-  if (!_upstreamUdp.begin(UPSTREAM_LOCAL_PORT)) Serial.println("DNS upstream socket failed to start");
+  loadStats();
+  _udp.begin(DNS_PORT);
+  _upstreamUdp.begin(UPSTREAM_LOCAL_PORT);
+  _lastStatsSaveAt = millis();
 }
 
 void AdBlocker::loop() {
   handleUpstreamResponses();
   handleQuery();
+  if (_storageReady && _statsDirty && millis() - _lastStatsSaveAt >= STATS_SAVE_INTERVAL_MS) {
+    saveStats();
+  }
 }
 
 void AdBlocker::loadDomains() {
-  File file = LittleFS.open("/block.txt", "r");
+  if (!_storageReady) {
+    _domainCount = 0;
+  }
+  File file = _storageReady ? SD.open(BLOCKLIST_PATH, "r") : File();
   if (file) {
     while (file.available() && _domainCount < MAX_DOMAINS) {
       String domain = file.readStringUntil('\n');
@@ -96,11 +112,98 @@ void AdBlocker::loadDomains() {
   }
 }
 
-void AdBlocker::saveDomains() const {
-  File file = LittleFS.open("/block.txt", "w");
-  if (!file) return;
+bool AdBlocker::saveDomains() const {
+  if (!_storageReady) return false;
+  File file = SD.open(BLOCKLIST_PATH, "w");
+  if (!file) return false;
   for (uint8_t i = 0; i < _domainCount; ++i) file.println(_domains[i]);
+  file.flush();
+  const bool saved = !file.getWriteError();
   file.close();
+  return saved;
+}
+
+void AdBlocker::loadStats() {
+  if (!_storageReady) return;
+  File file = SD.open(STATS_PATH, "r");
+  if (!file) return;
+  String line = file.readStringUntil('\n');
+  file.close();
+  const int first = line.indexOf(',');
+  const int second = first < 0 ? -1 : line.indexOf(',', first + 1);
+  if (first < 0 || second < 0) return;
+  _queries = strtoul(line.substring(0, first).c_str(), nullptr, 10);
+  _blocked = strtoul(line.substring(first + 1, second).c_str(), nullptr, 10);
+  _forwarded = strtoul(line.substring(second + 1).c_str(), nullptr, 10);
+}
+
+bool AdBlocker::saveStats() {
+  if (!_storageReady) return false;
+  File file = SD.open(STATS_PATH, "w");
+  if (!file) return false;
+  file.printf("%lu,%lu,%lu\n", static_cast<unsigned long>(_queries),
+              static_cast<unsigned long>(_blocked), static_cast<unsigned long>(_forwarded));
+  file.flush();
+  const bool saved = !file.getWriteError();
+  file.close();
+  if (saved) {
+    _statsDirty = false;
+    _lastStatsSaveAt = millis();
+  }
+  return saved;
+}
+
+void AdBlocker::appendBlockedHistory(const String& host) {
+  if (!_storageReady) return;
+  File file = SD.open(HISTORY_PATH, FILE_WRITE);
+  if (!file) return;
+  if (file.size() >= HISTORY_FILE_LIMIT) {
+    file.close();
+    SD.remove(OLD_HISTORY_PATH);
+    if (!SD.rename(HISTORY_PATH, OLD_HISTORY_PATH)) return;
+    file = SD.open(HISTORY_PATH, FILE_WRITE);
+    if (!file) return;
+  }
+
+  const time_t now = time(nullptr);
+  const unsigned long epoch = now > 1700000000 ? static_cast<unsigned long>(now) : 0;
+  const unsigned long uptimeSeconds = millis() / 1000UL;
+  file.printf("%lu,%lu,%s\n", epoch, uptimeSeconds, host.c_str());
+  file.close();
+}
+
+String AdBlocker::historyJson() const {
+  String entries[HISTORY_ITEMS];
+  uint8_t next = 0, count = 0;
+  const char* paths[] = {OLD_HISTORY_PATH, HISTORY_PATH};
+  for (const char* path : paths) {
+    File file = _storageReady ? SD.open(path, "r") : File();
+    if (!file) continue;
+    while (file.available()) {
+      String line = file.readStringUntil('\n');
+      line.trim();
+      if (line.indexOf(',') < 0) continue;
+      entries[next] = line;
+      next = (next + 1) % HISTORY_ITEMS;
+      if (count < HISTORY_ITEMS) ++count;
+    }
+    file.close();
+  }
+
+  String json = "{\"events\":[";
+  const uint8_t start = count == HISTORY_ITEMS ? next : 0;
+  for (uint8_t i = 0; i < count; ++i) {
+    if (i) json += ',';
+    const String& entry = entries[(start + i) % HISTORY_ITEMS];
+    const int first = entry.indexOf(',');
+    const int second = first < 0 ? -1 : entry.indexOf(',', first + 1);
+    if (first < 0 || second < 0) continue;
+    json += "{\"epoch\":" + entry.substring(0, first) +
+        ",\"uptime\":" + entry.substring(first + 1, second) +
+        ",\"domain\":\"" + entry.substring(second + 1) + "\"}";
+  }
+  json += "]}";
+  return json;
 }
 
 bool AdBlocker::isBlocked(const String& host) const {
@@ -114,6 +217,10 @@ bool AdBlocker::isBlocked(const String& host) const {
 }
 
 bool AdBlocker::addDomain(String domain, String& error) {
+  if (!_storageReady) {
+    error = "بطاقة SD غير متاحة؛ لم يتم حفظ النطاق";
+    return false;
+  }
   domain.trim();
   domain.toLowerCase();
   if (!validDomain(domain)) {
@@ -131,19 +238,28 @@ bool AdBlocker::addDomain(String domain, String& error) {
     return false;
   }
   _domains[_domainCount++] = domain;
-  saveDomains();
+  if (!saveDomains()) {
+    --_domainCount;
+    error = "تعذر حفظ القائمة على بطاقة SD";
+    return false;
+  }
   return true;
 }
 
 bool AdBlocker::removeDomain(String domain) {
+  if (!_storageReady) return false;
   domain.trim();
   domain.toLowerCase();
   for (uint8_t i = 0; i < _domainCount; ++i) {
     if (_domains[i] == domain) {
+      const String removed = _domains[i];
       for (uint8_t j = i + 1; j < _domainCount; ++j) _domains[j - 1] = _domains[j];
       --_domainCount;
-      saveDomains();
-      return true;
+      if (saveDomains()) return true;
+      for (uint8_t j = _domainCount; j > i; --j) _domains[j] = _domains[j - 1];
+      _domains[i] = removed;
+      ++_domainCount;
+      return false;
     }
   }
   return false;
@@ -153,7 +269,8 @@ String AdBlocker::statsJson() const {
   String json = "{\"queries\":" + String(_queries) +
       ",\"blocked\":" + String(_blocked) +
       ",\"forwarded\":" + String(_forwarded) +
-      ",\"last\":\"" + _lastDomain + "\",\"domains\":[";
+      ",\"last\":\"" + _lastDomain + "\",\"storage\":" +
+      String(_storageReady ? "true" : "false") + ",\"domains\":[";
   for (uint8_t i = 0; i < _domainCount; ++i) {
     if (i) json += ',';
     json += '\"';
@@ -174,6 +291,7 @@ void AdBlocker::handleQuery() {
   const IPAddress client = _udp.remoteIP();
   const uint16_t clientPort = _udp.remotePort();
   ++_queries;
+  _statsDirty = true;
   String host;
   uint16_t questionEnd = 0, queryType = 0;
   if (!readQuestion(packet, length, host, questionEnd, queryType)) return;
@@ -185,6 +303,8 @@ void AdBlocker::handleQuery() {
   }
   if (isBlocked(host) && (queryType == 1 || queryType == 28)) {
     ++_blocked;
+    _statsDirty = true;
+    appendBlockedHistory(host);
     if (queryType == 1) answerAddress(packet, length, questionEnd, client, clientPort, IPAddress(0, 0, 0, 0));
     else sendNoData(_udp, packet, length, questionEnd, client, clientPort);
     return;
@@ -214,6 +334,7 @@ void AdBlocker::handleQuery() {
   slot->clientPort = clientPort;
   slot->startedAt = millis();
   ++_forwarded;
+  _statsDirty = true;
 }
 
 void AdBlocker::handleUpstreamResponses() {

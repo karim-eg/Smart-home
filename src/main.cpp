@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "StorageManager.h"
 #include "Config.h"
 #include "ClimateSensor.h"
 #include "GasSensor.h"
@@ -8,7 +9,6 @@
 #include "WebDashboard.h"
 #include "AdBlocker.h"
 #include "MqttManager.h"
-#include "PlantIrrigation.h"
 #include "FanController.h"
 
 // ── Modules ──────────────────────────────────────────────
@@ -20,7 +20,6 @@ NetworkManager network;
 WebDashboard   dashboard;
 AdBlocker      adBlocker;
 MqttManager    mqtt;
-PlantIrrigation plant;
 FanController  fan;
 
 // ── Timers ───────────────────────────────────────────────
@@ -38,13 +37,8 @@ String buildStateJson() {
   json += "\"hum\":\""       + String(climate.humidity(), 1)    + "\",";
   json += "\"gasStatus\":\"" + String(gas.statusString()) + "\",";
   json += "\"gasAlert\":"    + String(gas.alert() ? "true" : "false") + ",";
-  json += "\"soilReady\":"   + String(plant.hasReading() ? "true" : "false") + ",";
-  json += "\"soilMoisture\":" + String(plant.moisturePercent()) + ",";
-  json += "\"soilRaw\":"     + String(plant.rawValue()) + ",";
-  json += "\"pumpOn\":"      + String(plant.pumpOn() ? "true" : "false") + ",";
-  json += "\"soaking\":"     + String(plant.soaking() ? "true" : "false") + ",";
-  json += "\"lastWatering\":" + String(plant.secondsSinceWatering());
-  json += ",\"fanAutoStart\":" + String(fan.autoStartEnabled() ? "true" : "false");
+  json += "\"gasRaw\":"      + String(gas.analogValue()) + ",";
+  json += "\"fanAutoStart\":" + String(fan.autoStartEnabled() ? "true" : "false");
 
   json += "}";
   return json;
@@ -68,20 +62,24 @@ void onCommand(const String& msg) {
 }
 
 void setup() {
-  Serial.begin(115200);
+  // Establish a defined relay-off level before other startup work begins.
+  digitalWrite(STAIR_LAMP_RELAY_PIN, RELAY_OFF);
+  digitalWrite(LIVING_ROOM_RELAY_PIN, RELAY_OFF);
+  pinMode(STAIR_LAMP_RELAY_PIN, OUTPUT);
+  pinMode(LIVING_ROOM_RELAY_PIN, OUTPUT);
+
+  storage.begin();
 
   climate.begin();
   gas.begin();
   livingRoom.begin();
   staircase.begin();
-  plant.begin();
   network.begin();
   adBlocker.begin();
   fan.begin();
   dashboard.begin(onCommand, buildStateJson, adBlocker);
   mqtt.begin(onCommand, buildStateJson);
 
-  Serial.println("Ready.");
 }
 
 void loop() {
@@ -91,11 +89,6 @@ void loop() {
   mqtt.loop();
 
   if (staircase.loop()) {
-    dashboard.broadcastState();
-    mqtt.publishState();
-  }
-
-  if (plant.update()) {
     dashboard.broadcastState();
     mqtt.publishState();
   }

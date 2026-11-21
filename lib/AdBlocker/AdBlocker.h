@@ -9,6 +9,7 @@ public:
   void begin();
   void loop();
   String statsJson() const;
+  String historyJson() const;
   bool addDomain(String domain, String& error);
   bool removeDomain(String domain);
 
@@ -31,11 +32,17 @@ private:
   uint32_t _blocked = 0;
   uint32_t _forwarded = 0;
   String _lastDomain = "-";
+  bool _storageReady = false;
+  bool _statsDirty = false;
+  uint32_t _lastStatsSaveAt = 0;
   PendingQuery _pending[MAX_PENDING];
   uint16_t _nextRequestId = 0;
 
   void loadDomains();
-  void saveDomains() const;
+  bool saveDomains() const;
+  void loadStats();
+  bool saveStats();
+  void appendBlockedHistory(const String& host);
   bool isBlocked(const String& host) const;
   void handleQuery();
   void handleUpstreamResponses();
